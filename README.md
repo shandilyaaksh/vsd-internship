@@ -1,4 +1,3 @@
-# vsd-internship workshop
 # SKY130 RTL Design and Synthesis – VSD FPGA Internship
 
 This repository documents the RTL design, simulation, synthesis, and verification flow using open-source EDA tools as part of the VSD FPGA Internship Screening Program.
