@@ -1,202 +1,242 @@
-# SKY130 RTL Design and Synthesis – VSD FPGA Internship
+# VSD FPGA Internship – RTL Design and Synthesis
 
-This repository documents the RTL design, simulation, synthesis, and verification flow using open-source EDA tools as part of the VSD FPGA Internship Screening Program.
-
----
-
-## 1. Introduction to RTL Design
-
-RTL (Register Transfer Level) describes the behavior of a digital circuit.
-
-### Example RTL Code
-
-```verilog
-module sample_code (
-    input clk,
-    input rst,
-    output reg result,
-    output reg done
-);
-
-always @(posedge clk or posedge rst) begin
-    if (rst) begin
-        result <= 0;
-        done <= 0;
-    end else begin
-        result <= 1;
-        done <= 1;
-    end
-end
-
-endmodule
-```
-
-RTL represents the **behavioral description** of hardware.
+This repository contains the documentation and lab work performed as part of the VSD FPGA Internship Screening Program. It includes RTL design, simulation using Iverilog, waveform analysis using GTKWave, and synthesis using Yosys with Sky130 standard cell libraries.
 
 ---
 
-## 2. Iverilog Based Simulation Flow
+## Introduction to Verilog RTL Design and Simulation
 
-RTL Design is verified using simulation.
+### Objective
 
-### Flow
+To understand the fundamentals of Verilog design, simulation, and testbench methodology.
 
-```
-Design + Testbench → iverilog → VCD file → GTKWave
-```
+### Theory
 
-### Commands
+#### Simulator
+
+RTL designs are verified using simulation. The simulator checks whether the design meets the required specifications. Iverilog is used as the simulator in this workflow.
+
+#### Design
+
+Design refers to the Verilog code that implements the intended functionality of the system.
+
+#### Testbench
+
+A testbench applies input stimulus (test vectors) to the design and verifies correctness of the output.
+
+#### Working of Simulator
+
+The simulator monitors input changes and evaluates outputs accordingly:
+
+* Output updates when inputs change
+* Output remains constant when inputs remain unchanged
+
+---
+
+## Simulation Flow
+
+* Design and Testbench are given as input to the simulator
+* Simulator generates output in the form of a VCD file
+* GTKWave is used to visualize waveforms
+
+---
+
+## Labs using Iverilog and GTKWave
+
+### Repository Setup
+
+Clone the required repository using:
 
 ```bash
-iverilog testbench.v design.v
+git clone https://github.com/vsdip/vsd-rtl.git
+```
+
+This creates a directory:
+
+```
+sky130RTLDesignAndSynthesisWorkshop
+```
+
+---
+
+### Directory Structure
+
+* `lib/` → Contains Sky130 standard cell library
+* `my_lib/` → Contains Verilog models
+* `verilog_files/` → Contains design and testbench files
+
+---
+
+### Running Simulation
+
+```bash
+iverilog good_mux.v tb_good_mux.v
 ./a.out
-gtkwave dump.vcd
+gtkwave tb_good_mux.vcd
 ```
 
-Output is a **VCD waveform file** viewed in GTKWave.
+If any tool is missing:
 
----
-
-## 3. Introduction to Synthesis
-
-Synthesis converts RTL into gate-level netlist.
-
-### Tool Used
-
-* **Yosys** (Open-source synthesizer)
-
-### Flow
-
-```
-RTL Design + .lib → Yosys → Netlist
+```bash
+sudo apt install iverilog
+sudo apt install gtkwave
 ```
 
 ---
 
-## 4. What is .lib File?
+### Viewing Design and Testbench
 
-* Collection of logic gates
-* Contains AND, OR, NOT, etc.
-* Includes different versions (flavours):
-
-  * Slow cells
-  * Medium cells
-  * Fast cells
-
-Used by synthesizer to map RTL → real hardware gates
-
----
-
-## 5. Why Different Flavours of Gates?
-
-### Timing Constraint
-
-```
-Tclk > Tcq + Tcombi + Tsetup
+```bash
+gvim good_mux.v -o tb_good_mux.v
 ```
 
-* Faster cells → reduce delay
-* Slower cells → help avoid hold violations
+---
 
-Both fast and slow cells are required for correct design.
+## Introduction to Yosys and Logic Synthesis
+
+### Objective
+
+To understand logic synthesis and conversion of RTL to gate-level netlist.
 
 ---
 
-## 6. Faster vs Slower Cells
+### Theory
 
-| Type       | Advantage | Disadvantage           |
-| ---------- | --------- | ---------------------- |
-| Fast Cells | Low delay | High power, large area |
-| Slow Cells | Low power | Higher delay           |
+#### Synthesizer
 
-Trade-off between:
+A synthesizer converts RTL code into a gate-level netlist. Yosys is used in this flow.
 
-* Speed
-* Power
-* Area
+#### RTL Design
 
----
+RTL represents system behavior using Verilog HDL.
 
-## 7. Selection of Cells
+#### Synthesis
 
-Synthesizer selects cells based on constraints:
-
-* Too many fast cells → high power & area
-* Too many slow cells → poor performance
-
-Balanced selection is important.
+* Converts RTL to logic gates
+* Maps design using standard cell library
+* Produces a netlist file
 
 ---
 
-## 8. Synthesis Using Yosys
+### What is .lib
 
-### Commands
+* A `.lib` file contains standard cells like AND, OR, NOT
+* Each gate has multiple variants:
 
-```tcl
+  * Slow
+  * Medium
+  * Fast
+
+---
+
+### Gate Variants and Performance
+
+* Faster cells → lower delay, higher power and area
+* Slower cells → higher delay, lower power and area
+* Trade-off exists between performance, power, and area
+
+---
+
+### Need for Slow Cells
+
+Slow cells are required to avoid hold time violations and ensure timing correctness.
+
+---
+
+### Cell Selection
+
+The synthesizer selects cells based on constraints:
+
+* More fast cells → better performance but higher power
+* More slow cells → lower power but reduced speed
+
+---
+
+## Labs using Yosys and Sky130 PDK
+
+### Launch Yosys
+
+```bash
 yosys
-read_verilog design.v
-read_liberty sky130.lib
-synth
-write_verilog netlist.v
 ```
 
-Output: **Gate-level Netlist**
-
----
-
-## 9. Netlist Verification
-
-The synthesized netlist is verified using the same testbench.
-
-### Flow
-
-```
-Netlist + Testbench → iverilog → VCD → GTKWave
-```
-
-### Commands
+### Read Library
 
 ```bash
-iverilog testbench.v netlist.v
-./a.out
-gtkwave dump.vcd
+read_liberty -lib ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+```
+
+### Read Design
+
+```bash
+read_verilog good_mux.v
+```
+
+### Synthesize Design
+
+```bash
+synth -top good_mux
+```
+
+### Map to Standard Cells
+
+```bash
+abc -liberty ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 ```
 
 ---
 
-## 10. Observation
+### Generate Netlist
 
-* RTL output and Netlist output are same
-* Functional correctness is verified
-* Same testbench works for both
-
----
-
-## 11. Results
-
-### RTL Simulation Output
-
-(Add screenshot here)
-
-### Netlist Simulation Output
-
-(Add screenshot here)
+```bash
+write_verilog good_mux_netlist.v
+```
 
 ---
 
-## 12. Key Learnings
+### View Netlist
 
-* RTL design using Verilog
-* Simulation using Icarus Verilog
-* Waveform analysis using GTKWave
-* Synthesis using Yosys
-* Importance of .lib files
-* Timing constraints and optimization
+```bash
+gvim good_mux_netlist.v
+```
+
+---
+
+### Simplified Netlist
+
+```bash
+write_verilog -noattr good_mux_netlist.v
+gvim good_mux_netlist.v
+```
+
+---
+
+### Visual Representation
+
+```bash
+show
+```
+
+---
+
+## Verification of Synthesis
+
+* Same testbench used for RTL simulation can be reused
+* Compare RTL and synthesized netlist outputs
+* Outputs should match for correct synthesis
 
 ---
 
 ## Conclusion
 
-This lab demonstrates the complete RTL-to-Gate flow using open-source tools. It provides a strong foundation in digital VLSI design and synthesis techniques.
+* Understood RTL design and simulation using Iverilog
+* Visualized waveforms using GTKWave
+* Learned synthesis using Yosys
+* Generated and analyzed gate-level netlist
+* Understood trade-offs in cell selection and timing
 
 ---
+
+## Author
+
+Amritanshu Kumar Shandilya
